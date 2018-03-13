@@ -1,41 +1,50 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.Scanner;
 
-public class MainProgram {
+public class MainProgram 
+{
 	public static void main(String[] args)
 	{
-		try
-		{
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			System.out.println("Input m:");
-			int m = Integer.parseInt(br.readLine());
-			System.out.println("Input n:");
-			int n = Integer.parseInt(br.readLine());
-			double[][] matrix = new double[m][n];
-			System.out.println("Input matrix(with spaces):");
-			for(int i=0; i<m; ++i)
-			{
-				String line = br.readLine();
-				String[] elems = line.split(" ");
-				for(int j=0; j<n; ++i)
-				{
-					matrix[i][j] = Double.parseDouble(elems[j]);
-				}
-			}
-			System.out.println("Matrix::::");
-			for(int i=0; i<m; ++i)
-			{
-				for(int j=0; j<n; ++j)
-				{
-					System.out.print(matrix[i][j]+" ");
-				}
-				System.out.print('\n');
-			}
-		}
-		catch(IOException exc)
-		{
-			System.err.println("Invalid parametr");
-		}
+		Scanner reader = new Scanner(System.in);
+		System.out.println("Input num of rows(m):");
+		int rows = reader.nextInt();
+		System.out.println("Input num of cols(n):");
+		int cols = reader.nextInt();
+		
+		int[][] matrix = new int[rows][cols]; 
+		System.out.println("Input matrix[" + rows + "][" + cols +"] (with spaces):");
+		for(int i=0; i<rows; ++i)
+        { 
+        	for(int j=0; j<cols; ++j)
+        	{
+        		matrix[i][j] = reader.nextInt();
+        	}
+        } 
+        System.out.println("Readed matrix:");
+        for(int i=0; i<rows; ++i)
+        {
+        	for(int j=0; j<cols; ++j)
+        	{
+        		System.out.print(matrix[i][j] + " ");
+        	}
+        	System.out.print("\n");
+        }
+        int[] vector = new int[rows];
+        for(int i=0; i<rows; ++i)
+        {
+        	int minElement = matrix[i][0];
+        	for(int j=1; j<cols; ++j)
+        	{
+        		if(matrix[i][j]<minElement)
+        		{
+        			minElement = matrix[i][j];
+        		}
+        	}
+        	vector[i] = minElement;
+        }
+        System.out.println("Vector of min symetric elements of each row:");
+        for(int i=0; i<vector.length; ++i)
+        {
+        	System.out.print(vector[i] + " ");
+        }
 	}
 }

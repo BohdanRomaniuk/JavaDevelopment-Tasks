@@ -2,6 +2,18 @@ import java.util.Scanner;
 
 public class MainProgram 
 {
+	public static boolean isSymetric(int digit)
+	{
+		String digitStr = Integer.toString(digit);
+		for(int i=0; i<Math.ceil(digitStr.length()/2); ++i)
+		{
+			if(digitStr.charAt(i)!=digitStr.charAt(digitStr.length()-1-i))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 	public static void main(String[] args)
 	{
 		Scanner reader = new Scanner(System.in);
@@ -31,12 +43,19 @@ public class MainProgram
         int[] vector = new int[rows];
         for(int i=0; i<rows; ++i)
         {
-        	int minElement = matrix[i][0];
+        	int minElement = 0;
         	for(int j=1; j<cols; ++j)
         	{
-        		if(matrix[i][j]<minElement)
+        		if(isSymetric(matrix[i][j]))
         		{
-        			minElement = matrix[i][j];
+        			if(minElement==0)
+        			{
+        				minElement = matrix[i][j];
+        			}
+        			else if(matrix[i][j]<minElement)
+        			{
+        				minElement = matrix[i][j];
+        			}
         		}
         	}
         	vector[i] = minElement;

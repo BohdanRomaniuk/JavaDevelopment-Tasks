@@ -16,6 +16,7 @@ public class MainProgram
 	}
 	public static void main(String[] args)
 	{
+		@SuppressWarnings("resource")
 		Scanner reader = new Scanner(System.in);
 		System.out.println("Input num of rows(m):");
 		int rows = reader.nextInt();

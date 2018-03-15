@@ -1,13 +1,18 @@
-public class Edition 
+public abstract class Edition 
 {
-	private String name;
-	private int year;
-	private String publication;
+	protected String name;
+	protected int year;
+	protected String publication;
 	public Edition(String _name, int _year, String _publication)
 	{
 		name = _name;
 		year = _year;
 		publication = _publication;
 	}
-
+	
+	public String getName()
+	{
+		return name;
+	}
+	public abstract String toString();
 }

@@ -1,4 +1,4 @@
-public class Book extends Edition
+public final class Book extends Edition
 {
 	private String author;
 	private int pageCount;
@@ -7,5 +7,15 @@ public class Book extends Edition
 		super(_name, _year, _publication);
 		author = _author;
 		pageCount = _pageCount;
+	}
+	
+	public String getAuthor()
+	{
+		return author;
+	}
+	
+	public final String toString()
+	{
+		return name + " " + year + " " + publication + " " + author + " " + pageCount;
 	}
 }

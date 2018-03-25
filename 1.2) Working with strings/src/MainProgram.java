@@ -12,7 +12,9 @@ public class MainProgram
 		System.out.println("\nResult after removing all last chars from each word:");
 		for(int i=0; i<words.length; ++i)
 		{
+			String lastChracter = words[i].substring(words[i].length()-1);
 			words[i] = words[i].replace(words[i].substring(words[i].length()-1), "");
+			words[i] = words[i].concat(lastChracter);
 			System.out.print(words[i]+((i!=words.length-1)?" ":""));
 		}
 	}

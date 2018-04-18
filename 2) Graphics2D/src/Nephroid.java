@@ -1,10 +1,7 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
-import java.awt.image.*;
-import java.io.*;
 import java.util.*;
-import javax.imageio.*;
 import javax.swing.*;
 
 
@@ -48,7 +45,6 @@ class NephroidShape extends JPanel
 {  
    private Paint paint;
    private Stroke stroke;
-   private float width;
    
    public NephroidShape()
    {  
@@ -58,7 +54,7 @@ class NephroidShape extends JPanel
         MouseAdapter()
       {
          public void mousePressed(MouseEvent event)
-         {  
+         {
         	 Random randomizer = new Random();
         	 float r = randomizer.nextFloat();
         	 float g = randomizer.nextFloat();

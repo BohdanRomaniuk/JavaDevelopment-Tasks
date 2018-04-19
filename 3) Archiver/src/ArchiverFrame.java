@@ -7,6 +7,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -20,6 +31,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
  
 public class ArchiverFrame extends JFrame implements ActionListener
 {
@@ -40,14 +52,17 @@ public class ArchiverFrame extends JFrame implements ActionListener
     
     private JMenu archiveActionsMI = new JMenu("Дії з архівом");
     private JMenuItem saveArchiveMenu = new JMenuItem("Заархівувати");
-    private JMenuItem openArhiveMenu = new JMenuItem("Відкрити архів");
+    private JMenuItem openArchiveMenu = new JMenuItem("Відкрити архів");
     private JMenuItem deArchivateMenu = new JMenuItem("Розархівувати");
-    private JMenuItem addFileToArchiveMenu = new JMenuItem("Додати файл в архів");
+    private JMenuItem appendFileToArchiveMenu = new JMenuItem("Додати файл в архів");
     
     private JMenu helpMI = new JMenu("Інформація");
     private JMenuItem aboutMenu = new JMenuItem("Про програму");
     
-    private JTable table = new JTable(5, 2);
+    
+    DefaultTableModel model = new DefaultTableModel(); 
+    JTable table = new JTable(model);
+	
     
     private JLabel statusLine = new JLabel("Рядок стану");
     
@@ -79,16 +94,17 @@ public class ArchiverFrame extends JFrame implements ActionListener
         fileMI.add(exitMenu);
         
         saveArchiveMenu.addActionListener(this);
-        openArhiveMenu.addActionListener(this);
+        openArchiveMenu.addActionListener(this);
         deArchivateMenu.addActionListener(this);
-        addFileToArchiveMenu.addActionListener(this);
+        appendFileToArchiveMenu.addActionListener(this);
 
         archiveActionsMI.add(saveArchiveMenu);
         archiveActionsMI.add(separator);
-        archiveActionsMI.add(openArhiveMenu);
+        archiveActionsMI.add(openArchiveMenu);
         archiveActionsMI.add(deArchivateMenu);
-        archiveActionsMI.add(addFileToArchiveMenu);
+        archiveActionsMI.add(appendFileToArchiveMenu);
 
+        aboutMenu.addActionListener(this);
         helpMI.add(aboutMenu);
 
         menuBar.add(fileMI);
@@ -96,9 +112,12 @@ public class ArchiverFrame extends JFrame implements ActionListener
         menuBar.add(helpMI);
 
         setJMenuBar(menuBar);
-
+        
         panel2.add(table, BorderLayout.CENTER);
-
+        model.addColumn("Назва файлу"); 
+        model.addColumn("Розмір файлу");
+        model.addRow(new Object[]{"Назва файлу", "Розмір файлу"});
+        
         panel3.add(statusLine);
         
         chooseFileButton.addActionListener(this);
@@ -126,23 +145,36 @@ public class ArchiverFrame extends JFrame implements ActionListener
     {
         if(e.getSource() == chooseFileButton || e.getSource()==openFileMenu)
         {
+           removeAllRows();
+           statusLine.setText("Відкривання файлу для архівації");
      	   FileDialog dialog = new FileDialog((Frame)null, "Виберіть файл");
  		   dialog.setMode(FileDialog.LOAD);
  		   dialog.setVisible(true);
  		   from = dialog.getDirectory()+dialog.getFile();
  		   from = from.replace("\\", "\\\\");
  		   System.out.println("From file:"+from);
+ 		   File toOpen = new File(from);
+ 		   model.addRow(new Object[]{from.substring(from.lastIndexOf("\\\\")+2), convertToFileSize(toOpen.length(),true)});
+ 		   
         }
-        else if(e.getSource() == chooseDirButton)
+        else if(e.getSource() == chooseDirButton || e.getSource()==openDirMenu)
         {
+           removeAllRows();
+           statusLine.setText("Відкривання папки для архівації");
      	   JFileChooser f = new JFileChooser();
  	       f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); 
  	       f.showOpenDialog(null);
  	       from = f.getSelectedFile().toString();
+ 	       File folder = new File(from);
+ 	       File[] listOfFiles = folder.listFiles();
+ 	         for (int i = 0; i < listOfFiles.length; i++) {
+ 	             model.addRow(new Object[]{listOfFiles[i].getName(), convertToFileSize(listOfFiles[i].length(),true)});
+ 	         }
  	       System.out.println("From dir:"+from);
         }
-        else if(e.getSource() == saveArchive)
+        else if(e.getSource() == saveArchive || e.getSource()==saveArchiveMenu)
         {
+           statusLine.setText("Архівація");
  		   String to = "";
  		   File f = new File(from);
  		   boolean directory = f.isDirectory();
@@ -198,18 +230,21 @@ public class ArchiverFrame extends JFrame implements ActionListener
  			   finally
  			   {
  				   JOptionPane.showMessageDialog(null, "Файл "+to+" успішно збережно!", "Статус зберігання", JOptionPane.INFORMATION_MESSAGE);
+ 				   statusLine.setText("Архівацію завершено!");
  			   }
  		   }
         }
-        else if(e.getSource()==openArchive)
+        else if(e.getSource()==openArchive || e.getSource()==openArchiveMenu)
         {
+           statusLine.setText("Відкривання архіву");
      	   JFileChooser fc = new JFileChooser();
      	   fc.showOpenDialog(null);
      	   from = fc.getSelectedFile().toString();
      	   JOptionPane.showMessageDialog(null, "Файл "+from+" відкрито!\nТепер можете його розархівувати", "Статус відривання", JOptionPane.INFORMATION_MESSAGE);
         }
-        else if(e.getSource()==deArchivate)
+        else if(e.getSource()==deArchivate || e.getSource()==deArchivateMenu)
         {
+           statusLine.setText("Розархівація");
      	   String extension = from.substring(from.lastIndexOf(".")+1);
      	   String to = from.substring(0,from.lastIndexOf("."));
      	   System.out.println("From: "+from);
@@ -245,7 +280,54 @@ public class ArchiverFrame extends JFrame implements ActionListener
  	       finally
  	       {
  	    	   JOptionPane.showMessageDialog(null, to+" успішно збережено!", "Статус зберігання", JOptionPane.INFORMATION_MESSAGE);
+ 	    	   statusLine.setText("Розархівацію завершено!");
  	       }
         }
+        else if(e.getSource()==appendFileToArchive || e.getSource()==appendFileToArchiveMenu)
+        {
+        	Map<String, String> env = new HashMap<>(); 
+        	env.put("create", "true");
+        	Path path = Paths.get(from);
+        	URI uri = URI.create("jar:" + path.toUri());
+        	try (FileSystem fs = FileSystems.newFileSystem(uri, env))
+        	{
+        	    Path nf = fs.getPath("new.txt");
+        	    try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
+        	        writer.write("hello");
+        	    }
+        	}
+        	catch(IOException ex)
+        	{
+        		System.err.println(ex.getMessage());
+        	}
+        }
+        else if(e.getSource()==aboutMenu)
+        {
+        	AboutFrame frame = new AboutFrame("Створив студент групи ПМі-33 Романюк Богдан!");
+            frame.setVisible(true);
+        }
+        else if(e.getSource()==exitMenu)
+        {
+        	System.exit(0);
+        }
     } 
+    
+    public void removeAllRows()
+    {
+    	int rowCount = model.getRowCount();
+    	for (int i = rowCount - 1; i >= 0; i--) 
+    	{
+    	    model.removeRow(i);
+    	}
+    	model.addRow(new Object[]{"Назва файлу", "Розмір файлу"});
+    }
+    
+    public String convertToFileSize(long bytes, boolean si) 
+    {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
 }

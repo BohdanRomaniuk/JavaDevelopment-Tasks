@@ -16,8 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -236,10 +239,30 @@ public class ArchiverFrame extends JFrame implements ActionListener
         }
         else if(e.getSource()==openArchive || e.getSource()==openArchiveMenu)
         {
+           removeAllRows();
            statusLine.setText("Відкривання архіву");
      	   JFileChooser fc = new JFileChooser();
      	   fc.showOpenDialog(null);
      	   from = fc.getSelectedFile().toString();
+     	   String ext = from.substring(from.lastIndexOf('.')+1);
+     	   if(ext.equals("zip"))
+     	   {
+     	   try (ZipFile zipFile = new ZipFile(from)) {
+     		    Enumeration zipEntries = zipFile.entries();
+     		    while (zipEntries.hasMoreElements()) {
+     		        String fileName = ((ZipEntry) zipEntries.nextElement()).getName();
+     		        long fileSize = ((ZipEntry) zipEntries.nextElement()).getSize();
+     		        System.out.println(fileName);
+     		        model.addRow(new Object[]{fileName, convertToFileSize(fileSize,true)});
+     		    }
+     		} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+     	   }
+     	   else if(ext.equals("gz"))
+     	   {
+     		  model.addRow(new Object[]{from.subSequence(from.lastIndexOf('\\')+1, from.lastIndexOf('.')), convertToFileSize(109458,true)});
+     	   }
      	   JOptionPane.showMessageDialog(null, "Файл "+from+" відкрито!\nТепер можете його розархівувати", "Статус відривання", JOptionPane.INFORMATION_MESSAGE);
         }
         else if(e.getSource()==deArchivate || e.getSource()==deArchivateMenu)
@@ -285,21 +308,15 @@ public class ArchiverFrame extends JFrame implements ActionListener
         }
         else if(e.getSource()==appendFileToArchive || e.getSource()==appendFileToArchiveMenu)
         {
-        	Map<String, String> env = new HashMap<>(); 
-        	env.put("create", "true");
-        	Path path = Paths.get(from);
-        	URI uri = URI.create("jar:" + path.toUri());
-        	try (FileSystem fs = FileSystems.newFileSystem(uri, env))
-        	{
-        	    Path nf = fs.getPath("new.txt");
-        	    try (Writer writer = Files.newBufferedWriter(nf, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
-        	        writer.write("hello");
-        	    }
-        	}
-        	catch(IOException ex)
-        	{
-        		System.err.println(ex.getMessage());
-        	}
+        	statusLine.setText("Доповнення архіву");
+        	JFileChooser fc = new JFileChooser();
+      	   	fc.showOpenDialog(null);
+      	   	String newFileLocation = fc.getSelectedFile().toString();
+        	File[] files = {new File(newFileLocation)};
+        	Compress.addFilesToZip(new File(from), files);
+        	model.addRow(new Object[]{files[0].getName(), convertToFileSize(files[0].length(),true)});
+        	JOptionPane.showMessageDialog(null, "Архів успішно доповнено файлом "+files[0].getName(), "Статус доповнення", JOptionPane.INFORMATION_MESSAGE);
+	    	statusLine.setText("Доповнення архіву завершено!");
         }
         else if(e.getSource()==aboutMenu)
         {

@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -39,12 +40,15 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumnModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
  
@@ -138,11 +142,13 @@ public class JDBCFrame extends JFrame implements ActionListener
         centerLeftPanel.setPreferredSize(new Dimension(160, 600));
         centerLeftPanel.add(new JLabel("Structure:"), BorderLayout.NORTH);
         
-        root.setUserObject("Database name");
+        root.setUserObject("No Database");
         root.removeAllChildren();
         treeModel.reload(root);
         
-        centerLeftPanel.add(tree, BorderLayout.CENTER);
+        JScrollPane scrollingTree = new JScrollPane();
+        scrollingTree.setViewportView(tree);
+        centerLeftPanel.add(scrollingTree, BorderLayout.CENTER);
         
         JPanel queryLinePanel = new JPanel(new BorderLayout(10,10));
         queryLinePanel.add(new JLabel("Query:"), BorderLayout.WEST);
@@ -151,8 +157,13 @@ public class JDBCFrame extends JFrame implements ActionListener
         queryPanel.add(queryLinePanel, BorderLayout.NORTH);
         queryPanel.add(query, BorderLayout.CENTER);
         
+        JPanel scrollingTable = new JPanel(new BorderLayout());
+        scrollingTable.add(new JScrollPane(table));
+        scrollingTable.add(table.getTableHeader(), BorderLayout.NORTH);
+        scrollingTable.add(table, BorderLayout.CENTER);
         resultsPanel.add(new JLabel("Results:"), BorderLayout.NORTH);
-        resultsPanel.add(table);
+        resultsPanel.add(scrollingTable, BorderLayout.CENTER);
+        
         
         centerRightPanel.add(queryPanel);
         centerRightPanel.add(resultsPanel);
@@ -167,7 +178,7 @@ public class JDBCFrame extends JFrame implements ActionListener
     }
     
     private Connection conn;
-    private Statement stat;
+    private java.sql.Statement stat;
     private DatabaseMetaData meta;
     
     public void actionPerformed(ActionEvent e)
@@ -184,23 +195,48 @@ public class JDBCFrame extends JFrame implements ActionListener
 				meta = conn.getMetaData();
 				root.setUserObject(conn.getCatalog());
 				root.removeAllChildren();
-				ResultSet mrs = meta.getTables(null, null, null, new String[] { "TABLE" });
-				while (mrs.next())
+				ResultSet tables = meta.getTables(null, null, null, new String[] { "TABLE" });
+				while (tables.next())
 				{
-					DefaultMutableTreeNode dbTable = new DefaultMutableTreeNode(mrs.getString(3));
-					ResultSet resultSet = meta.getColumns(null, null, mrs.getString(3), null);
-					while(resultSet.next())
+					DefaultMutableTreeNode dbTable = new DefaultMutableTreeNode(tables.getString(3));
+					ResultSet columns = meta.getColumns(null, null, tables.getString(3), null);
+					while(columns.next())
 					{
-						String name = resultSet.getString("COLUMN_NAME");
+						String name = columns.getString("COLUMN_NAME");
 						dbTable.add(new DefaultMutableTreeNode(name));
 					}
 					root.add(dbTable);
 				}
-	            mrs.close();
+	            tables.close();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
             treeModel.reload(root);
+    	}
+    	else if(e.getSource()==evaluateButton)
+    	{
+    		try {
+				stat = conn.createStatement();
+				ResultSet rs = stat.executeQuery(query.getText());
+				ResultSetMetaData rsmd = rs.getMetaData();
+				int columns = rsmd.getColumnCount();
+				for(int i=0; i<columns; ++i)
+				{
+					model.addColumn(rsmd.getColumnName(i+1));
+				}
+
+				while(rs.next())
+				{
+					Object[] values = new Object[columns];
+					for(int i=0; i<columns; ++i)
+					{
+						values[i] = rs.getString(i+1);
+					}
+					model.addRow(values);
+				}
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
     	}
     	else if(e.getSource()==aboutMenu)
         {

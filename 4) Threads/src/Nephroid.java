@@ -84,12 +84,15 @@ public class Nephroid extends JPanel implements Runnable {
 		try
 		{
 			int smallest = getHeight()<getWidth()?getHeight():getWidth();
-	    	int r = smallest/10;
+	    	//int r = smallest/10;
 	    	int alpha = 0;
 	    	for(float phi=0; phi<=2*Math.PI; phi+=step)
 	    	{
-	    		float x = (float) (3*r*Math.cos(phi) - r*Math.cos(alpha+3*phi));
-	    		float y = (float) (3*r*Math.sin(phi) - r*Math.sin(alpha+3*phi));
+	    		//float x = (float) (3*r*Math.cos(phi) - r*Math.cos(alpha+3*phi));
+	    		//float y = (float) (3*r*Math.sin(phi) - r*Math.sin(alpha+3*phi));
+	    		float r = (float)Math.cbrt(64*Math.cos(3*phi));
+	       	  	float x = smallest/10*(float) (r*Math.cos(phi));
+	       	    float y = smallest/10*(float) (r*Math.sin(phi));
 	    		points.add(new Point2D.Double(x,y));
 	    		repaint();
 				Thread.sleep(delay);

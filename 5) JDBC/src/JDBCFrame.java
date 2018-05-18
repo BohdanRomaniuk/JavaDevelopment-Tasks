@@ -162,7 +162,7 @@ public class JDBCFrame extends JFrame implements ActionListener
         scrollingTable.add(table.getTableHeader(), BorderLayout.NORTH);
         scrollingTable.add(table, BorderLayout.CENTER);
         resultsPanel.add(new JLabel("Results:"), BorderLayout.NORTH);
-        resultsPanel.add(scrollingTable, BorderLayout.CENTER);
+        resultsPanel.add(new JScrollPane(scrollingTable), BorderLayout.CENTER);
         
         
         centerRightPanel.add(queryPanel);
@@ -216,6 +216,8 @@ public class JDBCFrame extends JFrame implements ActionListener
     	else if(e.getSource()==evaluateButton)
     	{
     		try {
+    			removeAllRows();
+    			
 				stat = conn.createStatement();
 				ResultSet rs = stat.executeQuery(query.getText());
 				ResultSetMetaData rsmd = rs.getMetaData();
@@ -248,7 +250,7 @@ public class JDBCFrame extends JFrame implements ActionListener
         	System.exit(0);
         }
     } 
-    
+
     public void removeAllRows()
     {
     	int rowCount = model.getRowCount();
@@ -256,6 +258,6 @@ public class JDBCFrame extends JFrame implements ActionListener
     	{
     	    model.removeRow(i);
     	}
-    	model.addRow(new Object[]{"Назва файлу", "Розмір файлу"});
+    	model.setColumnCount(0);
     }
 }
